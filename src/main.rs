@@ -2,7 +2,7 @@ use is_executable::IsExecutable;
 use std::env;
 #[allow(unused_imports)]
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn main() {
@@ -38,12 +38,7 @@ fn main() {
             }
             "cd" => {
                 let arg = token_iter.next().unwrap();
-                if arg.starts_with("/") {
-                    match env::set_current_dir(&arg) {
-                        Ok(_) => {}
-                        Err(_) => println!("{}: No such file or directory", arg),
-                    }
-                }
+                cd(&Path::new(&arg));
             }
             _ => {
                 if let Some(_) = find_executable(&command) {
@@ -53,6 +48,13 @@ fn main() {
                 }
             }
         }
+    }
+}
+
+fn cd(arg: &Path) {
+    match env::set_current_dir(&arg) {
+        Ok(_) => {}
+        Err(_) => println!("{}: No such file or directory", arg.to_str().unwrap()),
     }
 }
 
