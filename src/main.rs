@@ -20,6 +20,7 @@ fn main() {
                 match snd_command.as_str() {
                     "echo" => println!("echo is a shell builtin"),
                     "exit" => println!("echo is a shell builtin"),
+                    "type" => println!("echo is a shell builtin"),
                     _ => println!("{snd_command}: not found")
                 }
             },
