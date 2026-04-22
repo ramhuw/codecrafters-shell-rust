@@ -22,9 +22,7 @@ fn main() {
             "type" => {
                 let snd_command = token_iter.next().unwrap();
                 match snd_command.as_str() {
-                    "echo" => println!("echo is a shell builtin"),
-                    "exit" => println!("exit is a shell builtin"),
-                    "type" => println!("type is a shell builtin"),
+                    "echo" | "exit" | "type" | "pwd" => println!("{} is a shell builtin", snd_command),
                     _ => {
                         match find_executable(&snd_command) {
                             Some(target_path) => println!("{} is {}", snd_command, target_path.to_str().unwrap()),
@@ -32,6 +30,9 @@ fn main() {
                         }
                 }
             },
+            "pwd" => {
+                println!("{}", env::current_dir().unwrap().to_str().unwrap())
+            }
             _ => {
                 if let Some(_) = find_executable(&command) {
                     let _ = Command::new(&command)
