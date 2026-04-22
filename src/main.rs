@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
 use is_executable::IsExecutable;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::env;
 use std::process::Command;
 
@@ -33,8 +33,8 @@ fn main() {
                 }
             },
             _ => {
-                if let Some(cmd_path) = find_executable(&command) {
-                    Command::new(cmd_path)
+                if let Some(_) = find_executable(&command) {
+                    let _ = Command::new(&command)
                         .args(token_iter)
                         .status();
                 } else {
