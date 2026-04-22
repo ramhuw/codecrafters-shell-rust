@@ -38,7 +38,7 @@ fn main() {
             }
             "cd" => {
                 let arg = token_iter.next().unwrap();
-                cd(&Path::new(&arg));
+                cd(&arg);
             }
             _ => {
                 if let Some(_) = find_executable(&command) {
@@ -51,16 +51,22 @@ fn main() {
     }
 }
 
-fn cd(arg: &Path) {
-    if arg.starts_with("~") {
-        let home = env::var("HOME").unwrap();
-        let home_path = Path::new(&home);
-        let new_path = cd(&home_path.join(&arg.to_str().unwrap()[1..]));
+fn cd(arg: &str) {
+    let home = env::var("HOME").unwrap();
+    let home_path = Path::new(&home);
+    if arg == "~" {
+        env::set_current_dir(home_path).unwrap();
+        return;
+    } else if arg.starts_with("~/") {
+        match env::set_current_dir(home_path.join(&arg[2..])) {
+            Ok(_) => {},
+            Err(_) => println!("{}: No such file or directory", arg)
+        }
         return;
     }
     match env::set_current_dir(&arg) {
         Ok(_) => {}
-        Err(_) => println!("{}: No such file or directory", arg.to_str().unwrap()),
+        Err(_) => println!("{}: No such file or directory", arg),
     }
 }
 
