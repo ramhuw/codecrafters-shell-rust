@@ -1,5 +1,9 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
+use is_executable::IsExecutable;
+use std::path::{Path, PathBuf};
+use std::env;
+use std::fs;
 
 fn main() {
     loop {
@@ -21,11 +25,29 @@ fn main() {
                     "echo" => println!("echo is a shell builtin"),
                     "exit" => println!("exit is a shell builtin"),
                     "type" => println!("type is a shell builtin"),
-                    _ => println!("{snd_command}: not found")
+                    _ => {
+                        match find_executable(&snd_command) {
+                            Some(target_path) => println!("{} is {}", snd_command, target_path.to_str().unwrap()),
+                            None => println!("{snd_command}: not found")}
+                        }
                 }
             },
             _ => println!("{}: command not found", command)
         }
     }
     
+}
+
+fn find_executable(cmd: &str) -> Option<PathBuf> {
+    for path in env::split_paths(&env::var("PATH").unwrap()) {
+        for entry in path.read_dir().unwrap() {
+            let valid_entry = entry.unwrap();
+            let valid_path = valid_entry.path();
+            if valid_path.file_name().and_then(|s|s.to_str()) == Some(cmd) && valid_path.is_executable() {
+                return Some(valid_path)
+            }
+        }
+    }
+    
+    None
 }
