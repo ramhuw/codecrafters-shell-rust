@@ -52,6 +52,12 @@ fn main() {
 }
 
 fn cd(arg: &Path) {
+    if arg.starts_with("~") {
+        let home = env::var("HOME").unwrap();
+        let home_path = Path::new(&home);
+        let new_path = cd(&home_path.join(&arg.to_str().unwrap()[1..]));
+        return;
+    }
     match env::set_current_dir(&arg) {
         Ok(_) => {}
         Err(_) => println!("{}: No such file or directory", arg.to_str().unwrap()),
