@@ -8,6 +8,9 @@ fn main() {
         let mut command = String::new();
         io::stdin().read_line(&mut command).unwrap();
         command = command.trim().to_string();
+        if command == "exit".to_string() {
+            break;
+        }
         println!("{command}: command not found");
     }
     
