@@ -3,7 +3,7 @@ use std::io::{self, Write};
 use is_executable::IsExecutable;
 use std::path::{Path, PathBuf};
 use std::env;
-use std::fs;
+use std::process::Command;
 
 fn main() {
     loop {
@@ -32,7 +32,15 @@ fn main() {
                         }
                 }
             },
-            _ => println!("{}: command not found", command)
+            _ => {
+                if let Some(cmd_path) = find_executable(&command) {
+                    Command::new(cmd_path)
+                        .args(token_iter)
+                        .status();
+                } else {
+                    println!("{}: command not found", command)
+                }
+            }
         }
     }
     
