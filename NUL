@@ -1,0 +1,52 @@
+Starting cer server. Pre-initialize spent 3 ms.
+.p.PluginManager - Problems found loading plugins:
+  Plugin 'JetBrains Academy' (com.jetbrains.edu, version=2026.3-2025.3-793) requires IDE build 253.* or older, but the current build is RR-261.22158.331
+2026-04-21 23:46:54,020 [    762]   WARN - #c.i.p.instanceContainer - InstanceNotOverridableException: Override failed for com.intellij.openapi.project.impl.ProjectStoreFactory: com.intellij.configurationScript.providers.ConfigurationScriptProjectStoreFactory attempts to override com.intellij.configurationStore.PlatformLangProjectStoreFactory, but the existing implementation is not overriddable (not declared as 'open=true')
+2026-04-21 23:46:54,023 [    765]   WARN - #c.i.p.instanceContainer - InstanceNotOverridableException: Override failed for com.intellij.modcommand.ModCommandExecutor: com.jetbrains.rdserver.ui.intentions.RemoteModCommandExecutor attempts to override com.intellij.lang.impl.modcommand.ModCommandExecutorImpl, but the existing implementation is not overriddable (not declared as 'open=true')
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::allocateMemory has been called by io.netty.util.internal.PlatformDependent0$2
+WARNING: Please consider reporting this to the maintainers of class io.netty.util.internal.PlatformDependent0$2
+WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
+SLF4J(E): A service provider failed to instantiate:
+org.slf4j.spi.SLF4JServiceProvider: org.slf4j.jul.JULServiceProvider not a subtype
+2026-04-21 23:46:56,739 [   3481]   WARN - #c.i.s.c.i.StationSocketConnectionLoop - Discovery connection failed with AnnotatedConnectException(ConnectException) (Connection refused: connect: C:\Users\Hechi\AppData\Local\Temp\jb.station.Hechi.sock)
+2026-04-21 23:46:56,793 [   3535]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Background.Default.Dark is deprecated for new UI themes, use Checkbox.Background.Default instead
+2026-04-21 23:46:56,795 [   3537]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Border.Default.Dark is deprecated for new UI themes, use Checkbox.Border.Default instead
+2026-04-21 23:46:56,796 [   3538]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Border.Selected.Dark is deprecated for new UI themes, use Checkbox.Border.Selected instead
+2026-04-21 23:46:56,797 [   3539]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Foreground.Selected.Dark is deprecated for new UI themes, use Checkbox.Foreground.Selected instead
+2026-04-21 23:46:56,798 [   3540]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Focus.Wide.Dark is deprecated for new UI themes, use Checkbox.Focus.Wide instead
+2026-04-21 23:46:56,798 [   3540]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: color key Checkbox.Focus.Thin.Default.Dark is not supported and therefore ignored
+2026-04-21 23:46:56,799 [   3541]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: color key Checkbox.Focus.Thin.Selected.Dark is not supported and therefore ignored
+2026-04-21 23:46:56,800 [   3542]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Background.Disabled.Dark is deprecated for new UI themes, use Checkbox.Background.Disabled instead
+2026-04-21 23:46:56,800 [   3542]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Background.Selected.Dark is deprecated for new UI themes, use Checkbox.Background.Selected instead
+2026-04-21 23:46:56,801 [   3543]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Border.Disabled.Dark is deprecated for new UI themes, use Checkbox.Border.Disabled instead
+2026-04-21 23:46:56,801 [   3543]   WARN - #c.i.i.u.UiThemePaletteCheckBoxScope - Theme Islands Darcula: Checkbox.Foreground.Disabled.Dark is deprecated for new UI themes, use Checkbox.Foreground.Disabled instead
+2026-04-21 23:46:57,135 [   3877]   WARN - #c.i.s.c.i.StationSocketConnectionLoop - RecentProjects connection failed with AnnotatedConnectException(ConnectException) (Connection refused: connect: C:\Users\Hechi\AppData\Local\Temp\jb.station.Hechi.sock)
+2026-04-21 23:47:00.771 [DBG] [oshi.util.FileUtil] No {} file found from ClassLoader {}:[Ljava.lang.Object;@3ccb8cf1
+2026-04-21 23:47:01.206 [DBG] [oshi.software.os.windows.WindowsOperatingSystem] Debug privileges not enabled.:null
+2026-04-21 23:47:12,043 [  18785]   WARN - #c.i.p.w.WhatsNewMultipageStartIdProvider - What's new artifact contains several page ids but getId() returns null. Implement WhatsNewMultipageStartIdProvider.getId() to return one of them. Now trying to show the first page from available.
+2026-04-21 23:47:12,223 [  18965]   WARN - #c.i.u.j.JBCefApp - CEF version 137.0.17+gf354b0e+chromium-137.0.7151.104 doesn't match the launcher version 122.1.9+gd14e051+chromium-122.0.6261.94
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by com.jetbrains.cef.JCefAppConfig$6 in module jcef (jrt:/jcef)
+WARNING: Use --enable-native-access=jcef to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+2026-04-21 23:47:43,969 [  50711]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 5 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,970 [  50712]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 6 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,971 [  50713]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 13 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,971 [  50713]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 14 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,971 [  50713]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 11 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,972 [  50714]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 9 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,972 [  50714]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 1 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,973 [  50715]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 8 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,973 [  50715]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 4 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,974 [  50716]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 7 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,974 [  50716]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 3 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,974 [  50716]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 10 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,975 [  50717]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 2 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,975 [  50717]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 0 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:43,975 [  50717]   WARN - #c.i.u.i.c.IndexUpdateRunner - Coroutine 12 finished exceptionally: com.intellij.platform.instanceContainer.internal.ContainerDisposedException: Container 'ProjectImpl@501536582 services' was disposed
+2026-04-21 23:47:46,854 [  53596]   WARN - #c.i.o.f.i.EditorsSplitters - No file exists: mock:///What's New in RustRover
+2026-04-21 23:48:01,120 [  67862]   WARN - #c.i.i.p.m.PluginChunkDataSource - Empty range: request 'https://downloads.marketplace.jetbrains.com/files/10081/1012282/JetBrainsAcademy-2026.3-2026.1-175.zip' range ''
+2026-04-21 23:48:27.434 [TRC] [daemon-client-ws] /system/events/handleUri/31824 incoming exception java.util.concurrent.CancellationException: Job was cancelled
+2026-04-21 23:48:27.436 [TRC] [daemon-client-ws] /system/events/handleUri/31824 request failed kotlinx.coroutines.JobCancellationException: Job was cancelled
