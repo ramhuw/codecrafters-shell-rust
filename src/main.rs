@@ -19,8 +19,8 @@ fn main() {
                 let snd_command = token_iter.next().unwrap();
                 match snd_command.as_str() {
                     "echo" => println!("echo is a shell builtin"),
-                    "exit" => println!("echo is a shell builtin"),
-                    "type" => println!("echo is a shell builtin"),
+                    "exit" => println!("exit is a shell builtin"),
+                    "type" => println!("type is a shell builtin"),
                     _ => println!("{snd_command}: not found")
                 }
             },
