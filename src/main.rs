@@ -90,10 +90,12 @@ fn tokenizer(input: &String) -> Vec<String> {
     let mut result = Vec::new();
     let mut current = String::new();
     let mut in_single = false;
+    let mut in_double = false;
     for c in input.chars() {
         match c {
-            '\'' => in_single = !in_single,
-            ' ' if !in_single => {
+            '\'' if !in_double => in_single = !in_single,
+            '"' if !in_single => in_double = !in_double,
+            ' ' if !in_single && !in_double => {
                 if !current.is_empty() {
                     result.push(current.clone());
                     current.clear();
