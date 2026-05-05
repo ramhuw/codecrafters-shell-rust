@@ -1,5 +1,6 @@
 use is_executable::IsExecutable;
 use std::env;
+use std::fs::File;
 #[allow(unused_imports)]
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -14,38 +15,81 @@ fn main() {
         input = input.trim().to_string();
         let mut token_iter = tokenizer(&input).into_iter();
         let command = token_iter.next().unwrap();
+        let mut output = String::new();
+        let stout = [">", "1>"];
         match command.as_str() {
             "exit" => break,
             "echo" => {
-                println!("{}", token_iter.collect::<Vec<String>>().join(" "))
+                output = format!(
+                    "{}",
+                    token_iter
+                        .clone()
+                        .take_while(|s| s != ">" && s != "1>")
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                );
+                token_iter = token_iter
+                    .skip_while(|s| ![">", "1>"].contains(&s.as_str()))
+                    .collect::<Vec<String>>()
+                    .into_iter();
             }
             "type" => {
                 let snd_command = token_iter.next().unwrap();
                 match snd_command.as_str() {
                     "echo" | "exit" | "type" | "pwd" | "cd" => {
-                        println!("{} is a shell builtin", snd_command)
+                        output = format!("{} is a shell builtin", snd_command);
                     }
                     _ => match find_executable(&snd_command) {
                         Some(target_path) => {
-                            println!("{} is {}", snd_command, target_path.to_str().unwrap())
+                            output =
+                                format!("{} is {}", snd_command, target_path.to_str().unwrap());
                         }
-                        None => println!("{snd_command}: not found"),
+                        None => output = format!("{snd_command}: not found"),
                     },
                 }
             }
             "pwd" => {
-                println!("{}", env::current_dir().unwrap().to_str().unwrap())
+                output = format!("{}", env::current_dir().unwrap().to_str().unwrap());
             }
             "cd" => {
-                let arg = token_iter.next().unwrap();
+                let arg = token_iter.next().unwrap_or("~".to_string());
                 cd(&arg);
             }
             _ => {
                 if let Some(_) = find_executable(&command) {
-                    let _ = Command::new(&command).args(token_iter).status();
+                    output = Command::new(&command)
+                        .args(
+                            token_iter
+                                .clone()
+                                .take_while(|s| !stout.contains(&s.as_str())),
+                        )
+                        .output()
+                        .unwrap()
+                        .stdout
+                        .iter()
+                        .map(|u| (*u as char).to_string())
+                        .collect::<Vec<String>>()
+                        .join("");
+                    token_iter = token_iter
+                        .skip_while(|s| !stout.contains(&s.as_str()))
+                        .collect::<Vec<String>>()
+                        .into_iter();
                 } else {
                     println!("{}: command not found", command)
                 }
+            }
+        }
+        if !output.is_empty() {
+            if let Some(token) = token_iter.next() {
+                match token {
+                    token if [">", "1>"].contains(&token.as_str()) => {
+                        let mut file = File::create(token_iter.next().unwrap()).unwrap();
+                        file.write(output.as_bytes()).unwrap();
+                    }
+                    _ => {}
+                }
+            } else {
+                println!("{}", output);
             }
         }
     }
