@@ -16,7 +16,6 @@ fn main() {
         let mut token_iter = tokenizer(&input).into_iter();
         let command = token_iter.next().unwrap();
         let mut output = String::new();
-        let mut error = String::new();
         let stout = [">", "1>"];
         match command.as_str() {
             "exit" => break,
@@ -100,7 +99,7 @@ fn main() {
                     _ => {}
                 }
             } else {
-                println!("{}", output.trim().to_string() + error.trim());
+                println!("{}", output.trim().to_string());
             }
         }
     }
