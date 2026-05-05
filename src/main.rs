@@ -12,7 +12,7 @@ fn main() {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
         input = input.trim().to_string();
-        let mut token_iter = input.split_whitespace().map(|s| s.to_string());
+        let mut token_iter = tokenizer(&input).into_iter();
         let command = token_iter.next().unwrap();
         match command.as_str() {
             "exit" => break,
@@ -59,8 +59,8 @@ fn cd(arg: &str) {
         return;
     } else if arg.starts_with("~/") {
         match env::set_current_dir(home_path.join(&arg[2..])) {
-            Ok(_) => {},
-            Err(_) => println!("{}: No such file or directory", arg)
+            Ok(_) => {}
+            Err(_) => println!("{}: No such file or directory", arg),
         }
         return;
     }
@@ -84,4 +84,24 @@ fn find_executable(cmd: &str) -> Option<PathBuf> {
     }
 
     None
+}
+
+fn tokenizer(input: &String) -> Vec<String> {
+    let mut result = Vec::new();
+    let mut current = String::new();
+    let mut in_single = false;
+    for c in input.chars() {
+        match c {
+            '\'' => in_single = !in_single,
+            ' ' if !in_single && !current.is_empty() => {
+                result.push(current.clone());
+                current.clear();
+            }
+            _ => current.push(c),
+        }
+    }
+    if !current.is_empty() {
+        result.push(current);
+    }
+    result
 }
