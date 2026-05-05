@@ -104,7 +104,7 @@ fn tokenizer(input: &String) -> Vec<String> {
                 }
             }
             _ => {
-                if behind_slash && !['"', '\\', '$', '`', '\n'].contains(&c) {
+                if in_double && behind_slash && !['"', '\\', '$', '`', '\n'].contains(&c) {
                     current.push('\\');
                 }
                 behind_slash = false;
