@@ -1,7 +1,7 @@
 use is_executable::IsExecutable;
 use std::env;
-use std::fs::File;
-use std::io::{self, BufRead, Write, stderr};
+use std::fs::{File, OpenOptions};
+use std::io::{self, BufRead, Write};
 use std::ops::Add;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -96,12 +96,14 @@ fn main() {
         let mut token_iter = tokenizer(input.trim()).into_iter();
         let redirect_stdout = [">", "1>"];
         let redirect_stderr = ["2>"];
-        let redirects = [">", "1>", "2>"];
+        let append_stdout = [">>", "1>>"];
+        let append_stderr = ["2>>"];
+        let stops = [">", "1>", "2>", ">>", "1>>", "2>>"];
         if let Some(command) = token_iter.next() {
             let args = token_iter
                 .clone()
-                .take_while(|s| !redirects.contains(&s.as_str()));
-            let mut stdout_iter = token_iter.skip_while(|s| !redirects.contains(&s.as_str()));
+                .take_while(|s| !stops.contains(&s.as_str()));
+            let mut stdout_iter = token_iter.skip_while(|s| !stops.contains(&s.as_str()));
             let builtin = Builtin::from(&command);
             let output: Output = match builtin {
                 Builtin::Exit => break,
@@ -124,19 +126,27 @@ fn main() {
                     }
                 }
             };
-            if let Some(redirect) = stdout_iter.next() {
-                if redirect_stdout.contains(&redirect.as_str()) {
-                    let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
+            if let Some(stop) = stdout_iter.next() {
+                let file_name = stdout_iter.next().unwrap();
+                if redirect_stdout.contains(&stop.as_str()) {
+                    let mut file = File::create(file_name).unwrap();
                     file.write_all(output.stdout.as_bytes()).unwrap();
                     if !output.stderr.is_empty() {
                         println!("{}", output.stderr);
                     }
-                } else if redirect_stderr.contains(&redirect.as_str()) {
-                    let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
+                } else if redirect_stderr.contains(&stop.as_str()) {
+                    let mut file = File::create(file_name).unwrap();
                     file.write_all(output.stderr.as_bytes()).unwrap();
                     if !output.stdout.is_empty() {
                         println!("{}", output.stdout);
                     }
+                } else if append_stdout.contains(&stop.as_str()) {
+                    let mut file = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(file_name)
+                        .unwrap();
+                    file.write_all(output.stdout.as_bytes()).unwrap();
                 }
             } else if !output.stdout.is_empty() {
                 println!("{}", output.stdout);
