@@ -1,139 +1,148 @@
 use is_executable::IsExecutable;
 use std::env;
 use std::fs::File;
-#[allow(unused_imports)]
-use std::io::{self, Write};
+use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+
+enum Builtin {
+    Exit,
+    Echo,
+    Type,
+    PWD,
+    CD,
+    Command { command: String },
+}
+
+impl Builtin {
+    fn from(token: &str) -> Self {
+        match token {
+            "exit" => Self::Exit,
+            "echo" => Self::Echo,
+            "type" => Self::Type,
+            "pwd" => Self::PWD,
+            "cd" => Self::CD,
+            command => Self::Command {
+                command: command.to_string(),
+            },
+        }
+    }
+}
+
+impl ToString for Builtin {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Exit => String::from("exit"),
+            Self::Echo => String::from("echo"),
+            Self::Type => String::from("type"),
+            Self::PWD => String::from("pwd"),
+            Self::CD => String::from("cd"),
+            Self::Command { command } => String::from(command),
+        }
+    }
+}
 
 fn main() {
     loop {
         print!("$ ");
         io::stdout().flush().unwrap();
         let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-        input = input.trim().to_string();
-        let mut token_iter = tokenizer(&input).into_iter();
-        let command = token_iter.next().unwrap();
-        let mut output = String::new();
-        let stout = [">", "1>"];
-        match command.as_str() {
-            "exit" => break,
-            "echo" => {
-                output = format!(
-                    "{}",
-                    token_iter
-                        .clone()
-                        .take_while(|s| s != ">" && s != "1>")
-                        .collect::<Vec<String>>()
-                        .join(" ")
-                );
-                token_iter = token_iter
-                    .skip_while(|s| ![">", "1>"].contains(&s.as_str()))
-                    .collect::<Vec<String>>()
-                    .into_iter();
-            }
-            "type" => {
-                let snd_command = token_iter.next().unwrap();
-                match snd_command.as_str() {
-                    "echo" | "exit" | "type" | "pwd" | "cd" => {
-                        output = format!("{} is a shell builtin", snd_command);
-                    }
-                    _ => match find_executable(&snd_command) {
-                        Some(target_path) => {
-                            output =
-                                format!("{} is {}", snd_command, target_path.to_str().unwrap());
-                        }
-                        None => output = format!("{snd_command}: not found"),
-                    },
-                }
-            }
-            "pwd" => {
-                output = format!("{}", env::current_dir().unwrap().to_str().unwrap());
-            }
-            "cd" => {
-                let arg = token_iter.next().unwrap_or("~".to_string());
-                cd(&arg);
-            }
-            _ => {
-                if let Some(_) = find_executable(&command) {
-                    let out = Command::new(&command)
-                        .args(
-                            token_iter
-                                .clone()
-                                .take_while(|s| !stout.contains(&s.as_str())),
-                        )
-                        .output()
-                        .unwrap();
-
-                    output = out
-                        .stdout
-                        .iter()
-                        .map(|u| (*u as char).to_string())
-                        .collect::<Vec<String>>()
-                        .join("");
-                    output.push_str(
-                        out.stderr
-                            .iter()
-                            .map(|u| (*u as char).to_string())
-                            .collect::<Vec<String>>()
-                            .join("")
-                            .as_str(),
-                    );
-                    token_iter = token_iter
-                        .skip_while(|s| !stout.contains(&s.as_str()))
-                        .collect::<Vec<String>>()
-                        .into_iter();
-                } else {
-                    println!("{}: command not found", command)
-                }
+        match io::stdin().lock().read_line(&mut input) {
+            Ok(0) => break,
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("{}", e);
+                break;
             }
         }
-        if !output.is_empty() {
-            if let Some(token) = token_iter.next() {
-                match token {
-                    token if stout.contains(&token.as_str()) => {
-                        match File::create(token_iter.next().unwrap()) {
-                            Ok(mut file) => {
-                                file.write(output.trim().as_bytes()).unwrap();
-                            }
-                            Err(e) => println!("{}", e),
-                        }
+        let mut token_iter = tokenizer(input.trim()).into_iter();
+        let redirect_stdout = [">", "1>"];
+        let redirects = [">", "1>"];
+        if let Some(command) = token_iter.next() {
+            let args = token_iter
+                .clone()
+                .take_while(|s| !redirects.contains(&s.as_str()));
+            let mut stdout_iter = token_iter.skip_while(|s| !redirects.contains(&s.as_str()));
+            let builtin = Builtin::from(&command);
+            let mut stdout = match builtin {
+                Builtin::Exit => break,
+                Builtin::Echo => handle_echo(args),
+                Builtin::Type => handle_type(args),
+                Builtin::PWD => format!("{}", env::current_dir().unwrap().to_str().unwrap()),
+                Builtin::CD => handle_cd(args),
+                Builtin::Command { command } => {
+                    if let Some(_) = find_executable(&command) {
+                        let output = Command::new(&command).args(args).output().unwrap();
+                        std::io::stderr().write_all(&output.stderr).unwrap();
+                        String::from_utf8(output.stdout).unwrap().trim().to_string()
+                    } else {
+                        String::new()
                     }
-                    _ => {}
                 }
-            } else {
-                println!("{}", output.trim().to_string());
+            };
+            stdout = stdout.trim().to_string();
+            if let Some(redirect) = stdout_iter.next() {
+                if redirect_stdout.contains(&redirect.as_str()) {
+                    let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
+                    file.write_all(stdout.as_bytes()).unwrap();
+                }
+            } else if !stdout.is_empty() {
+                println!("{}", stdout);
             }
         }
     }
 }
 
-fn cd(arg: &str) {
+fn handle_echo(args: impl Iterator<Item = String>) -> String {
+    args.collect::<Vec<String>>().join(" ")
+}
+
+fn handle_type(args: impl Iterator<Item = String>) -> String {
+    args.map(|arg| find_type(arg))
+        .collect::<Vec<String>>()
+        .join("\n")
+}
+
+fn find_type(arg: String) -> String {
+    match Builtin::from(arg.as_str()) {
+        Builtin::Command { command } => match find_executable(&command) {
+            Some(target_path) => format!("{} is {}", arg, target_path.to_str().unwrap()),
+            None => format!("{arg}: not found"),
+        },
+        _ => format!("{} is a shell builtin", arg),
+    }
+}
+
+fn handle_cd(args: impl Iterator<Item = String>) -> String {
+    let mut args = args;
+    let arg = args.next().unwrap_or("~".to_string());
+    if let Some(_) = args.next() {
+        eprintln!("cd: too many arguments");
+    }
     let home = env::var("HOME").unwrap();
     let home_path = Path::new(&home);
     if arg == "~" {
         env::set_current_dir(home_path).unwrap();
-        return;
     } else if arg.starts_with("~/") {
         match env::set_current_dir(home_path.join(&arg[2..])) {
             Ok(_) => {}
-            Err(_) => println!("{}: No such file or directory", arg),
+            Err(_) => eprintln!("{}: No such file or directory", arg),
         }
-        return;
+    } else {
+        match env::set_current_dir(&arg) {
+            Ok(_) => {}
+            Err(_) => eprintln!("{}: No such file or directory", arg),
+        }
     }
-    match env::set_current_dir(&arg) {
-        Ok(_) => {}
-        Err(_) => println!("{}: No such file or directory", arg),
-    }
+    String::new()
 }
 
-fn find_executable(cmd: &str) -> Option<PathBuf> {
+fn find_executable(command: &str) -> Option<PathBuf> {
     for path in env::split_paths(&env::var("PATH").unwrap()) {
         for entry in path.read_dir().unwrap() {
             let valid_entry = entry.unwrap();
             let valid_path = valid_entry.path();
-            if valid_path.file_name().and_then(|s| s.to_str()) == Some(cmd)
+            if valid_path.file_name().and_then(|s| s.to_str()) == Some(command)
                 && valid_path.is_executable()
             {
                 return Some(valid_path);
@@ -144,7 +153,7 @@ fn find_executable(cmd: &str) -> Option<PathBuf> {
     None
 }
 
-fn tokenizer(input: &String) -> Vec<String> {
+fn tokenizer(input: &str) -> Vec<String> {
     let mut result = Vec::new();
     let mut current = String::new();
     let mut in_single = false;
