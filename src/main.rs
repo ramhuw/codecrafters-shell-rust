@@ -1,13 +1,46 @@
 use is_executable::IsExecutable;
 use std::env;
 use std::fs::File;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead, Write, stderr};
+use std::ops::Add;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-enum Output {
-    Stdout(String),
-    Stderr(String),
+struct Output {
+    stdout: String,
+    stderr: String,
+}
+
+impl Add for Output {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        Self {
+            stdout: self.stdout + &other.stdout,
+            stderr: self.stderr + &other.stderr,
+        }
+    }
+}
+
+impl Output {
+    fn new() -> Self {
+        Self {
+            stdout: String::new(),
+            stderr: String::new(),
+        }
+    }
+    fn from_stdout(s: String) -> Self {
+        Self {
+            stdout: s,
+            stderr: String::new(),
+        }
+    }
+
+    fn from_stderr(s: String) -> Self {
+        Self {
+            stdout: String::new(),
+            stderr: s,
+        }
+    }
 }
 
 enum Builtin {
@@ -74,75 +107,64 @@ fn main() {
                 Builtin::Exit => break,
                 Builtin::Echo => handle_echo(args),
                 Builtin::Type => handle_type(args),
-                Builtin::PWD => {
-                    Output::Stdout(format!("{}", env::current_dir().unwrap().to_str().unwrap()))
-                }
+                Builtin::PWD => Output::from_stdout(format!(
+                    "{}",
+                    env::current_dir().unwrap().to_str().unwrap()
+                )),
                 Builtin::CD => handle_cd(args),
                 Builtin::Command { command } => {
                     if !find_executable(&command).is_none() {
                         let output = Command::new(&command).args(args).output().unwrap();
-                        if output.status.success() {
-                            Output::Stdout(
-                                String::from_utf8(output.stdout).unwrap().trim().to_string(),
-                            )
-                        } else {
-                            Output::Stderr(
-                                String::from_utf8(output.stderr).unwrap().trim().to_string(),
-                            )
+                        Output {
+                            stdout: String::from_utf8(output.stdout).unwrap().trim().to_string(),
+                            stderr: String::from_utf8(output.stderr).unwrap().trim().to_string(),
                         }
                     } else {
-                        Output::Stderr(format!("{}: command not found", command))
+                        Output::from_stderr(format!("{}: command not found", command))
                     }
                 }
             };
-            let mut stdout = String::new();
-            let mut stderr = String::new();
-            match output {
-                Output::Stdout(o) => stdout = o,
-                Output::Stderr(o) => stderr = o,
-            }
             if let Some(redirect) = stdout_iter.next() {
                 if redirect_stdout.contains(&redirect.as_str()) {
                     let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
-                    file.write_all(stdout.as_bytes()).unwrap();
-                    if !stderr.is_empty() {
-                        println!("{}", stderr);
+                    file.write_all(output.stdout.as_bytes()).unwrap();
+                    if !output.stderr.is_empty() {
+                        println!("{}", output.stderr);
                     }
                 } else if redirect_stderr.contains(&redirect.as_str()) {
                     let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
-                    file.write_all(stderr.as_bytes()).unwrap();
-                    if !stdout.is_empty() {
-                        println!("{}", stdout);
+                    file.write_all(output.stderr.as_bytes()).unwrap();
+                    if !output.stdout.is_empty() {
+                        println!("{}", output.stdout);
                     }
                 }
-            } else if !stdout.is_empty() {
-                println!("{}", stdout);
-            } else if !stderr.is_empty() {
-                println!("{}", stderr);
+            } else if !output.stdout.is_empty() {
+                println!("{}", output.stdout);
+            } else if !output.stderr.is_empty() {
+                println!("{}", output.stderr);
             }
         }
     }
 }
 
 fn handle_echo(args: impl Iterator<Item = String>) -> Output {
-    Output::Stdout(args.collect::<Vec<String>>().join(" "))
+    Output::from_stdout(args.collect::<Vec<String>>().join(" "))
 }
 
 fn handle_type(args: impl Iterator<Item = String>) -> Output {
-    Output::Stdout(
-        args.map(|arg| find_type(arg))
-            .collect::<Vec<String>>()
-            .join("\n"),
-    )
+    args.map(|arg| find_type(arg))
+        .fold(Output::new(), |acc, a| acc + a)
 }
 
-fn find_type(arg: String) -> String {
+fn find_type(arg: String) -> Output {
     match Builtin::from(arg.as_str()) {
         Builtin::Command { command } => match find_executable(&command) {
-            Some(target_path) => format!("{} is {}", arg, target_path.to_str().unwrap()),
-            None => format!("{arg}: not found"),
+            Some(target_path) => {
+                Output::from_stdout(format!("{} is {}", arg, target_path.to_str().unwrap()))
+            }
+            None => Output::from_stderr(format!("{arg}: not found")),
         },
-        _ => format!("{} is a shell builtin", arg),
+        _ => Output::from_stdout(format!("{} is a shell builtin", arg)),
     }
 }
 
@@ -150,7 +172,7 @@ fn handle_cd(args: impl Iterator<Item = String>) -> Output {
     let mut args = args;
     let arg = args.next().unwrap_or("~".to_string());
     if let Some(_) = args.next() {
-        Output::Stderr(format!("cd: too many arguments"));
+        Output::from_stderr(format!("cd: too many arguments"));
     }
     let home = env::var("HOME").unwrap();
     let home_path = Path::new(&home);
@@ -159,15 +181,15 @@ fn handle_cd(args: impl Iterator<Item = String>) -> Output {
     } else if arg.starts_with("~/") {
         match env::set_current_dir(home_path.join(&arg[2..])) {
             Ok(_) => {}
-            Err(_) => return Output::Stderr(format!("{}: No such file or directory", arg)),
+            Err(_) => return Output::from_stderr(format!("{}: No such file or directory", arg)),
         }
     } else {
         match env::set_current_dir(&arg) {
             Ok(_) => {}
-            Err(_) => return Output::Stderr(format!("{}: No such file or directory", arg)),
+            Err(_) => return Output::from_stderr(format!("{}: No such file or directory", arg)),
         }
     }
-    Output::Stdout(String::new())
+    Output::from_stdout(String::new())
 }
 
 fn find_executable(command: &str) -> Option<PathBuf> {
