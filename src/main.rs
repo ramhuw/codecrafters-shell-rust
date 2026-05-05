@@ -5,6 +5,11 @@ use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+enum Output {
+    Stdout(String),
+    Stderr(String),
+}
+
 enum Builtin {
     Exit,
     Echo,
@@ -57,51 +62,72 @@ fn main() {
         }
         let mut token_iter = tokenizer(input.trim()).into_iter();
         let redirect_stdout = [">", "1>"];
-        let redirects = [">", "1>"];
+        let redirect_stderr = ["2>"];
+        let redirects = [">", "1>", "2>"];
         if let Some(command) = token_iter.next() {
             let args = token_iter
                 .clone()
                 .take_while(|s| !redirects.contains(&s.as_str()));
             let mut stdout_iter = token_iter.skip_while(|s| !redirects.contains(&s.as_str()));
             let builtin = Builtin::from(&command);
-            let mut stdout = match builtin {
+            let output: Output = match builtin {
                 Builtin::Exit => break,
                 Builtin::Echo => handle_echo(args),
                 Builtin::Type => handle_type(args),
-                Builtin::PWD => format!("{}", env::current_dir().unwrap().to_str().unwrap()),
+                Builtin::PWD => {
+                    Output::Stdout(format!("{}", env::current_dir().unwrap().to_str().unwrap()))
+                }
                 Builtin::CD => handle_cd(args),
                 Builtin::Command { command } => {
-                    if let Some(_) = find_executable(&command) {
+                    if !find_executable(&command).is_none() {
                         let output = Command::new(&command).args(args).output().unwrap();
-                        std::io::stderr().write_all(&output.stderr).unwrap();
-                        String::from_utf8(output.stdout).unwrap().trim().to_string()
+                        if output.status.success() {
+                            Output::Stdout(
+                                String::from_utf8(output.stdout).unwrap().trim().to_string(),
+                            )
+                        } else {
+                            Output::Stderr(
+                                String::from_utf8(output.stderr).unwrap().trim().to_string(),
+                            )
+                        }
                     } else {
-                        eprintln!("{}: command not found", command);
-                        String::new()
+                        Output::Stderr(format!("{}: command not found", command))
                     }
                 }
             };
-            stdout = stdout.trim().to_string();
+            let mut stdout = String::new();
+            let mut stderr = String::new();
+            match output {
+                Output::Stdout(o) => stdout = o,
+                Output::Stderr(o) => stderr = o,
+            }
             if let Some(redirect) = stdout_iter.next() {
                 if redirect_stdout.contains(&redirect.as_str()) {
                     let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
                     file.write_all(stdout.as_bytes()).unwrap();
+                } else if redirect_stderr.contains(&redirect.as_str()) {
+                    let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
+                    file.write_all(stderr.as_bytes()).unwrap();
                 }
             } else if !stdout.is_empty() {
                 println!("{}", stdout);
+            } else if !stderr.is_empty() {
+                println!("{}", stderr);
             }
         }
     }
 }
 
-fn handle_echo(args: impl Iterator<Item = String>) -> String {
-    args.collect::<Vec<String>>().join(" ")
+fn handle_echo(args: impl Iterator<Item = String>) -> Output {
+    Output::Stdout(args.collect::<Vec<String>>().join(" "))
 }
 
-fn handle_type(args: impl Iterator<Item = String>) -> String {
-    args.map(|arg| find_type(arg))
-        .collect::<Vec<String>>()
-        .join("\n")
+fn handle_type(args: impl Iterator<Item = String>) -> Output {
+    Output::Stdout(
+        args.map(|arg| find_type(arg))
+            .collect::<Vec<String>>()
+            .join("\n"),
+    )
 }
 
 fn find_type(arg: String) -> String {
@@ -114,11 +140,11 @@ fn find_type(arg: String) -> String {
     }
 }
 
-fn handle_cd(args: impl Iterator<Item = String>) -> String {
+fn handle_cd(args: impl Iterator<Item = String>) -> Output {
     let mut args = args;
     let arg = args.next().unwrap_or("~".to_string());
     if let Some(_) = args.next() {
-        eprintln!("cd: too many arguments");
+        Output::Stderr(format!("cd: too many arguments"));
     }
     let home = env::var("HOME").unwrap();
     let home_path = Path::new(&home);
@@ -127,15 +153,15 @@ fn handle_cd(args: impl Iterator<Item = String>) -> String {
     } else if arg.starts_with("~/") {
         match env::set_current_dir(home_path.join(&arg[2..])) {
             Ok(_) => {}
-            Err(_) => eprintln!("{}: No such file or directory", arg),
+            Err(_) => return Output::Stderr(format!("{}: No such file or directory", arg)),
         }
     } else {
         match env::set_current_dir(&arg) {
             Ok(_) => {}
-            Err(_) => eprintln!("{}: No such file or directory", arg),
+            Err(_) => return Output::Stderr(format!("{}: No such file or directory", arg)),
         }
     }
-    String::new()
+    Output::Stdout(String::new())
 }
 
 fn find_executable(command: &str) -> Option<PathBuf> {
