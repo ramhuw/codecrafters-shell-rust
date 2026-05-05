@@ -142,12 +142,13 @@ fn find_executable(command: &str) -> Option<PathBuf> {
     for path in env::split_paths(&env::var("PATH").unwrap_or_default()) {
         if let Ok(dir) = path.read_dir() {
             for entry in dir {
-                let valid_entry = entry.unwrap();
-                let valid_path = valid_entry.path();
-                if valid_path.file_name().and_then(|s| s.to_str()) == Some(command)
-                    && valid_path.is_executable()
-                {
-                    return Some(valid_path);
+                if let Ok(valid_entry) = entry {
+                    let valid_path = valid_entry.path();
+                    if valid_path.file_name().and_then(|s| s.to_str()) == Some(command)
+                        && valid_path.is_executable()
+                    {
+                        return Some(valid_path);
+                    }
                 }
             }
         }
