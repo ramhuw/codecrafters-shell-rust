@@ -16,6 +16,7 @@ fn main() {
         let mut token_iter = tokenizer(&input).into_iter();
         let command = token_iter.next().unwrap();
         let mut output = String::new();
+        let mut error = String::new();
         let stout = [">", "1>"];
         match command.as_str() {
             "exit" => break,
@@ -57,19 +58,29 @@ fn main() {
             }
             _ => {
                 if let Some(_) = find_executable(&command) {
-                    output = Command::new(&command)
+                    let out = Command::new(&command)
                         .args(
                             token_iter
                                 .clone()
                                 .take_while(|s| !stout.contains(&s.as_str())),
                         )
                         .output()
-                        .unwrap()
+                        .unwrap();
+
+                    output = out
                         .stdout
                         .iter()
                         .map(|u| (*u as char).to_string())
                         .collect::<Vec<String>>()
                         .join("");
+                    output.push_str(
+                        out.stderr
+                            .iter()
+                            .map(|u| (*u as char).to_string())
+                            .collect::<Vec<String>>()
+                            .join("")
+                            .as_str(),
+                    );
                     token_iter = token_iter
                         .skip_while(|s| !stout.contains(&s.as_str()))
                         .collect::<Vec<String>>()
@@ -89,7 +100,7 @@ fn main() {
                     _ => {}
                 }
             } else {
-                println!("{}", output);
+                println!("{}", output.trim().to_string() + error.trim());
             }
         }
     }
