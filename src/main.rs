@@ -97,13 +97,16 @@ fn tokenizer(input: &String) -> Vec<String> {
             '\\' if !in_single && !in_double && !behind_slash => behind_slash = true,
             '\'' if !in_double && !behind_slash => in_single = !in_single,
             '"' if !in_single && !behind_slash => in_double = !in_double,
-            ' ' if !in_single && !in_double => {
+            ' ' if !in_single && !in_double && !behind_slash => {
                 if !current.is_empty() {
                     result.push(current.clone());
                     current.clear();
                 }
             }
-            _ => current.push(c),
+            _ => {
+                behind_slash = false;
+                current.push(c);
+            }
         }
     }
     if !current.is_empty() {
