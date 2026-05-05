@@ -92,9 +92,13 @@ fn main() {
         if !output.is_empty() {
             if let Some(token) = token_iter.next() {
                 match token {
-                    token if [">", "1>"].contains(&token.as_str()) => {
-                        let mut file = File::create(token_iter.next().unwrap()).unwrap();
-                        file.write(output.trim().as_bytes()).unwrap();
+                    token if stout.contains(&token.as_str()) => {
+                        match File::create(token_iter.next().unwrap()) {
+                            Ok(mut file) => {
+                                file.write(output.trim().as_bytes()).unwrap();
+                            }
+                            Err(e) => println!("{}", e),
+                        }
                     }
                     _ => {}
                 }
