@@ -84,7 +84,7 @@ fn main() {
                 match token {
                     token if [">", "1>"].contains(&token.as_str()) => {
                         let mut file = File::create(token_iter.next().unwrap()).unwrap();
-                        file.write(output.as_bytes()).unwrap();
+                        file.write(output.trim().as_bytes()).unwrap();
                     }
                     _ => {}
                 }
