@@ -91,10 +91,12 @@ fn tokenizer(input: &String) -> Vec<String> {
     let mut current = String::new();
     let mut in_single = false;
     let mut in_double = false;
+    let mut behind_slash = false;
     for c in input.chars() {
         match c {
-            '\'' if !in_double => in_single = !in_single,
-            '"' if !in_single => in_double = !in_double,
+            '\\' if !in_single && !in_double && !behind_slash => behind_slash = true,
+            '\'' if !in_double && !behind_slash => in_single = !in_single,
+            '"' if !in_single && !behind_slash => in_double = !in_double,
             ' ' if !in_single && !in_double => {
                 if !current.is_empty() {
                     result.push(current.clone());
