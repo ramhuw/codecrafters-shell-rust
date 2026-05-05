@@ -105,9 +105,15 @@ fn main() {
                 if redirect_stdout.contains(&redirect.as_str()) {
                     let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
                     file.write_all(stdout.as_bytes()).unwrap();
+                    if !stderr.is_empty() {
+                        println!("{}", stderr);
+                    }
                 } else if redirect_stderr.contains(&redirect.as_str()) {
                     let mut file = File::create(stdout_iter.next().unwrap()).unwrap();
                     file.write_all(stderr.as_bytes()).unwrap();
+                    if !stdout.is_empty() {
+                        println!("{}", stdout);
+                    }
                 }
             } else if !stdout.is_empty() {
                 println!("{}", stdout);
