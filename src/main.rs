@@ -93,9 +93,11 @@ fn tokenizer(input: &String) -> Vec<String> {
     for c in input.chars() {
         match c {
             '\'' => in_single = !in_single,
-            ' ' if !in_single && !current.is_empty() => {
-                result.push(current.clone());
-                current.clear();
+            ' ' if !in_single => {
+                if !current.is_empty() {
+                    result.push(current.clone());
+                    current.clear();
+                }
             }
             _ => current.push(c),
         }
